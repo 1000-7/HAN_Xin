@@ -6,6 +6,7 @@ import nltk
 import pymysql
 from nltk.tokenize import WordPunctTokenizer
 
+# 统计基本信息
 # 打开数据库连接
 db = pymysql.connect("localhost", "root", "irlab2017", "graduate", charset='utf8')
 
