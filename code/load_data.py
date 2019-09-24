@@ -1,39 +1,48 @@
 import pickle
 import numpy as np
+import random
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 def read_dataset():
-    with open('/home/pczero/data/han_data/yelp_data', 'rb') as f:
+    num = random.randint(0, 9)
+    logger.info("now epoch use data: %s" % str(num))
+    with open('/home/wangxin/PycharmProjects/HAN_Xin/data/han_type1_data_' + str(num), 'rb') as f:
         data_x, data_y = pickle.load(f)
         length = len(data_x)
-        train_x, dev_x = data_x[:int(length*0.9)], data_x[int(length*0.9)+1:]
-        train_y, dev_y = data_y[:int(length*0.9)], data_y[int(length*0.9)+1:]
+        train_x, dev_x = data_x[:int(length * 0.99)], data_x[int(length * 0.99) + 1:]
+        train_y, dev_y = data_y[:int(length * 0.99)], data_y[int(length * 0.99) + 1:]
         return train_x, train_y, dev_x, dev_y
 
+
 def batch(inputs):
-  batch_size = len(inputs)
+    batch_size = len(inputs)
 
-  document_sizes = np.array([len(doc) for doc in inputs], dtype=np.int32)
-  document_size = document_sizes.max()
+    document_sizes = np.array([len(doc) for doc in inputs], dtype=np.int32)
+    document_size = document_sizes.max()
 
-  sentence_sizes_ = [[len(sent) for sent in doc] for doc in inputs]
-  sentence_size = max(map(max, sentence_sizes_))
+    sentence_sizes_ = [[len(sent) for sent in doc] for doc in inputs]
+    sentence_size = max(map(max, sentence_sizes_))
 
-  b = np.zeros(shape=[batch_size, document_size, sentence_size], dtype=np.int32) # == PAD
+    b = np.zeros(shape=[batch_size, document_size, sentence_size], dtype=np.int32)  # == PAD
 
-  sentence_sizes = np.zeros(shape=[batch_size, document_size], dtype=np.int32)
-  for i, document in enumerate(inputs):
-    for j, sentence in enumerate(document):
-      sentence_sizes[i, j] = sentence_sizes_[i][j]
-      for k, word in enumerate(sentence):
-        b[i, j, k] = word
+    sentence_sizes = np.zeros(shape=[batch_size, document_size], dtype=np.int32)
+    for i, document in enumerate(inputs):
+        for j, sentence in enumerate(document):
+            sentence_sizes[i, j] = sentence_sizes_[i][j]
+            for k, word in enumerate(sentence):
+                b[i, j, k] = word
 
-  return b, document_sizes, sentence_sizes
+    return b, document_sizes, sentence_sizes
+
 
 def batch_iter(data, batch_size, num_epochs, shuffle=True):
     data = np.array(data)
     data_size = len(data)
-    num_batches_per_epoch = int((len(data)-1)/batch_size) + 1
+    num_batches_per_epoch = int((len(data) - 1) / batch_size) + 1
     for epoch in range(num_epochs):
         # Shuffle the data at each epoch
         if shuffle:
