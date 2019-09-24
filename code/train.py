@@ -122,6 +122,12 @@ with tf.Session() as sess:
         for i in range(0, 200000, FLAGS.batch_size):
             x = train_x[i:i + FLAGS.batch_size]
             y = train_y[i:i + FLAGS.batch_size]
-            step = train_step(x, y)
+            try:
+                step = train_step(x, y)
+            except ValueError:
+                continue
             if step % FLAGS.evaluate_every == 0:
-                dev_step(dev_x, dev_y, dev_summary_writer)
+                try:
+                    dev_step(dev_x, dev_y, dev_summary_writer)
+                except ValueError:
+                    continue
