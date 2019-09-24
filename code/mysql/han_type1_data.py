@@ -26,7 +26,7 @@ word_freq = pickle.load(open('../word_freq.pickle', 'rb'))
 logger.info("word_freq load finished")
 # SQL 查询语句
 try:
-    for iter in range(3, 10):
+    for iter in range(1, 3):
         logger.info("now batch is:" + str(iter))
         sql = "SELECT * FROM semanticScholar_filter limit " + str(iter * 200000) + "," + str(200000) + ";"
         logger.info(sql)

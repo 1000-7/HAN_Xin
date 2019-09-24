@@ -5,7 +5,7 @@ import pickle
 
 data_x = []
 data_y = []
-root_path = ""
+root_path = "/home/wangxin/PycharmProjects/HAN_Xin/data"
 
 dir_or_files = os.listdir(root_path)
 for dir_file in dir_or_files:

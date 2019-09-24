@@ -12,12 +12,12 @@ from load_data import read_dataset, batch_iter
 
 # Data loading params
 tf.flags.DEFINE_string("data_dir", "data/data.dat", "data directory")
-tf.flags.DEFINE_integer("vocab_size", 46960, "vocabulary size")
+tf.flags.DEFINE_integer("vocab_size", 625293, "vocabulary size")
 tf.flags.DEFINE_integer("num_classes", 5, "number of classes")
 tf.flags.DEFINE_integer("embedding_size", 200, "Dimensionality of character embedding (default: 200)")
 tf.flags.DEFINE_integer("hidden_size", 50, "Dimensionality of GRU hidden layer (default: 50)")
-tf.flags.DEFINE_integer("batch_size", 32, "Batch Size (default: 64)")
-tf.flags.DEFINE_integer("num_epochs", 10, "Number of training epochs (default: 50)")
+tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
+tf.flags.DEFINE_integer("num_epochs", 100, "Number of training epochs (default: 50)")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
 tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (default: 5)")
 tf.flags.DEFINE_integer("evaluate_every", 100, "evaluate every this many batches")
@@ -25,9 +25,6 @@ tf.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 tf.flags.DEFINE_float("grad_clip", 5, "grad clip to prevent gradient explode")  # 防止梯度爆炸
 
 FLAGS = tf.flags.FLAGS
-
-train_x, train_y, dev_x, dev_y = read_dataset()
-print("data load finished")
 
 with tf.Session() as sess:
     han = model.HAN(vocab_size=FLAGS.vocab_size,
@@ -110,16 +107,18 @@ with tf.Session() as sess:
             han.max_sentence_length: 30,
             han.batch_size: 64
         }
-        step1, summaries, cost, accuracy = sess.run([global_step, dev_summary_op, loss, acc], feed_dict)
+        step_now, summaries, cost, accuracy = sess.run([global_step, dev_summary_op, loss, acc], feed_dict)
         time_str = str(int(time.time()))
-        print("++++++++++++++++++dev++++++++++++++{}: step {}, loss {:g}, acc {:g}".format(time_str, step1, cost,
+        print("++++++++++++++++++dev++++++++++++++{}: step {}, loss {:g}, acc {:g}".format(time_str, step_now, cost,
                                                                                            accuracy))
         if writer:
-            writer.add_summary(summaries, step1)
+            writer.add_summary(summaries, step_now)
 
 
     for epoch in range(FLAGS.num_epochs):
         print('current epoch %s' % (epoch + 1))
+        train_x, train_y, dev_x, dev_y = read_dataset()
+        print("data load finished")
         for i in range(0, 200000, FLAGS.batch_size):
             x = train_x[i:i + FLAGS.batch_size]
             y = train_y[i:i + FLAGS.batch_size]
