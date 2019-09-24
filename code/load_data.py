@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def read_dataset():
     num = random.randint(0, 9)
     logger.info("now epoch use data: %s" % str(num))
-    with open('/home/zgb/wangxindata/data/han_type1_data_' + str(num), 'rb') as f:
+    with open('/home/zgb/wangxindata/data/type2/han_type2_data_' + str(num), 'rb') as f:
         data_x, data_y = pickle.load(f)
         length = len(data_x)
         train_x, dev_x = data_x[:int(length * 0.99)], data_x[int(length * 0.99) + 1:]
