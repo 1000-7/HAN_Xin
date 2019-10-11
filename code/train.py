@@ -12,7 +12,7 @@ from load_data import read_dataset, batch_iter
 
 # Data loading params
 tf.flags.DEFINE_string("data_dir", "data/data.dat", "data directory")
-tf.flags.DEFINE_integer("vocab_size", 625293, "vocabulary size")
+tf.flags.DEFINE_integer("vocab_size",565369, "vocabulary size")
 tf.flags.DEFINE_integer("num_classes", 5, "number of classes")
 tf.flags.DEFINE_integer("embedding_size", 200, "Dimensionality of character embedding (default: 200)")
 tf.flags.DEFINE_integer("hidden_size", 50, "Dimensionality of GRU hidden layer (default: 50)")
