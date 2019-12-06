@@ -9,11 +9,11 @@ import model
 import time
 import os
 from load_data import read_dataset, batch_iter
-
+from tensorflow.python.framework import graph_util
 # Data loading params
 tf.flags.DEFINE_string("data_dir", "data/data.dat", "data directory")
-tf.flags.DEFINE_integer("vocab_size",565369, "vocabulary size")
-tf.flags.DEFINE_integer("num_classes", 5, "number of classes")
+tf.flags.DEFINE_integer("vocab_size",625292, "vocabulary size")
+tf.flags.DEFINE_integer("num_classes", 11, "number of classes")
 tf.flags.DEFINE_integer("embedding_size", 200, "Dimensionality of character embedding (default: 200)")
 tf.flags.DEFINE_integer("hidden_size", 50, "Dimensionality of GRU hidden layer (default: 50)")
 tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
@@ -25,7 +25,7 @@ tf.flags.DEFINE_float("learning_rate", 0.001, "learning rate")
 tf.flags.DEFINE_float("grad_clip", 5, "grad clip to prevent gradient explode")  # 防止梯度爆炸
 
 FLAGS = tf.flags.FLAGS
-
+pb_file_path = os.getcwd()
 with tf.Session() as sess:
     han = model.HAN(vocab_size=FLAGS.vocab_size,
                     num_classes=FLAGS.num_classes,
@@ -131,3 +131,14 @@ with tf.Session() as sess:
                     dev_step(dev_x, dev_y, dev_summary_writer)
                 except ValueError:
                     continue
+
+    # 写入序列化的pb文件
+    graph_def = tf.get_default_graph().as_graph_def()
+    output_graph_def = graph_util.convert_variables_to_constants(
+        sess,
+        graph_def,
+        output_node_names = ["doc_classification/predict"] #< -- 参数：output_node_names，输出节点名
+    )
+    with tf.gfile.GFile(pb_file_path + 'model.pb', mode='wb') as fid:
+        serialized_graph = output_graph_def.SerializeToString()
+        fid.write(serialized_graph)

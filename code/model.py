@@ -75,6 +75,7 @@ class HAN():
     def classifer(self, doc_vec):
         with tf.name_scope('doc_classification'):
             out = layers.fully_connected(inputs=doc_vec, num_outputs=self.num_classes, activation_fn=None)
+            res = tf.argmax(out,1,name="predict")
             return out
 
     def BidirectionalGRUEncoder(self, inputs, name):
