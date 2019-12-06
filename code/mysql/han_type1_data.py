@@ -2,6 +2,10 @@
 # -*- coding: UTF-8 -*-
 import pickle
 from collections import defaultdict
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 import nltk
 import numpy as np

@@ -121,7 +121,7 @@ def genPickleData():
                     continue
 
             logger.info("results has iterated" + str(iter))
-            pickle.dump((data_x, data_y), open('han_type1_data_' + str(iter), 'wb'))
+            pickle.dump((data_x, data_y), open('han_type3_data_' + str(iter), 'wb'))
         logger.info("pickle dump end")
 
     except:
