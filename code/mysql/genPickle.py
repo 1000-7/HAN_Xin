@@ -9,19 +9,20 @@ import pymysql
 from nltk.tokenize import WordPunctTokenizer
 import logging
 import pandas as pd
-config= {
-    "db_addr":"localhost",
-    "db_user":"root",
-    "db_password":"irlab2017",
-    "db_name":"graduate",
-    "db_charSet":'utf8',
-    "sent_tokenizer_path" : r'D:\Program Files (x86)\anaconda\nltkdata\english.pickle',
-    "num_classes":11,
+
+config = {
+    "db_addr": "localhost",
+    "db_user": "root",
+    "db_password": "irlab2017",
+    "db_name": "graduate",
+    "db_charSet": 'utf8',
+    "sent_tokenizer_path": r'D:\Program Files (x86)\anaconda\nltkdata\english.pickle',
+    "num_classes": 11,
 }
 max_sent_in_doc = 30
 max_word_in_sent = 30
 iterNum = 200000
-path = "sectiontitle2classindex.xlsx"
+path = "sectionTitle2ClassIndex.xlsx"
 # 加载标签类别字典
 dict = pd.read_excel(path)
 sheet = dict.values.tolist()
@@ -32,20 +33,20 @@ for item in sheet:
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 db = pymysql.connect(config["db_addr"],
-                    config["db_user"],
-                    config["db_password"],
-                    config["db_name"],
+                     config["db_user"],
+                     config["db_password"],
+                     config["db_name"],
                      charset=config["db_charSet"])
 
 sent_tokenizer = nltk.data.load('/home/wangxin/sshFile/nltk_data/tokenizers/punkt/english.pickle')  # 加载英文的划分句子的模型
 word_tokenizer = WordPunctTokenizer()
+
 
 def genPickleData():
     # 使用cursor()方法获取操作游标
     cursor = db.cursor()
 
     # 加载英文的划分单词的模型
-
 
     # 记录每个单词及其出现的频率
     word_freq = pickle.load(open('../word_freq.pickle', 'rb'))
@@ -78,9 +79,6 @@ def genPickleData():
             logger.info("cursor fetch finished" + str(iter))
             # 构建vocabulary，并将出现次数小于5的单词全部去除，视为UNKNOW
 
-
-
-
             UNKNOWN = 0
             data_x = []
             data_y = []
@@ -101,7 +99,7 @@ def genPickleData():
                     continue
 
                 if finish_num % 10000 == 0:
-                    logger.info(str(finish_num) + " / " + str(iterNum)+ " has finished")
+                    logger.info(str(finish_num) + " / " + str(iterNum) + " has finished")
 
                 finish_num += 1
                 for i, sent in enumerate(sentences):
@@ -133,6 +131,6 @@ def genPickleData():
     # 关闭数据库连接
     db.close()
 
+
 if __name__ == "__main__":
     genPickleData()
-
