@@ -7,10 +7,12 @@ from nltk.tokenize import WordPunctTokenizer
 from config import config
 import pickle
 from collections import defaultdict
+import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-config = config["104"]
+
+config = config["10"]
 db = pymysql.connect(config["db_addr"],
                      config["db_user"],
                      config["db_password"],
@@ -62,8 +64,10 @@ def genVocabulary():
     try:
         # 执行SQL语句
         cursor.execute(sql)
+        logger.info(sql)
         # 获取所有记录列表
         results = cursor.fetchall()
+        ℹ = 0
         for row in results:
             paperSection = row[2].replace("- ", "")
             type1 = row[6]
@@ -72,28 +76,33 @@ def genVocabulary():
                 continue
             for word in words:
                 word_freq[word] += 1
+                i = i+1
+            if i % 10000 == 0:
+                logger.info("10000 has finished")
         print("load finish")
-
         with open('word_freq.pickle', 'wb') as g:
             pickle.dump(word_freq, g)
             print("word_freq save finished")
-        # 保存word-index字典
-        vocab = {}
-        i = 1
-        for word, freq in word_freq.items():
-            if freq > config["min_word_freq"]:
-                if word not in vocab.keys():
-                    vocab[word] = i
-                    i += 1
-        logger.info("vocab len " + str(len(vocab) + 1))
-        pickle.dump(vocab, open('word2index_dict', 'wb'))
-        logger.info("vocab build finished")
-
     except:
-        print("Error: unable to fetch data")
+            print("Error: unable to fetch data")
+    finally:
+        # 关闭数据库连接
+        db.close()
 
-    # 关闭数据库连接
-    db.close()
+
+    # 保存word-index字典
+    vocab = {}
+    i = 1
+    for word, freq in word_freq.items():
+        if freq > config["min_word_freq"]:
+            if word not in vocab.keys():
+                vocab[word] = i
+                i += 1
+    logger.info("vocab len " + str(len(vocab) + 1))
+    pickle.dump(vocab, open('../traindata/word2index_dict', 'wb'))
+    logger.info("vocab build finished")
+
+
 def data_stat():
     """
     统计每个文本平均句子数量，每个句子的平均词语数量
@@ -130,3 +139,5 @@ def data_stat():
 
     # 关闭数据库连接
     db.close()
+if __name__ == "__main__":
+    genVocabulary()
