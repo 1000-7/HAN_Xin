@@ -7,7 +7,7 @@ import pymysql
 from nltk.tokenize import WordPunctTokenizer
 import logging
 import pandas as pd
-from code.config import config
+from config import config
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ for item in sheet:
     sectTitle2classindex_dict[item[0]] = item[1]
     sampleNumControler[item[0]] = [item[3],0]
 
-vocab = pickle.load(open('word2index_dict', 'rb'))
+vocab = pickle.load(open('../traindata/word2index_dict', 'rb'))
 UNKNOWN = 0
 db = pymysql.connect(config["db_addr"],
                      config["db_user"],
@@ -45,7 +45,7 @@ def data_trans(paperSection,sentType):
     :param sentType:
     :return:
     """
-    if sampleNumControler(sentType):
+    if not sampleNumControl(sentType):
         return None
     doc = np.zeros((max_sent_in_doc,
                     max_word_in_sent),
@@ -67,7 +67,7 @@ def data_trans(paperSection,sentType):
         return [doc.tolist(),labels]
     return None
 
-def sampleNumControler(sentType):
+def sampleNumControl(sentType):
     """
     对每一类的训练样本数量进行控制
     :param sentType:
@@ -87,7 +87,7 @@ def genPickleData():
     # SQL 查询语句
     try:
         vocab['UNKNOW_TOKEN'] = 0
-        for iter in range(1, 11):
+        for iter in range(0, 10):
             logger.info("now batch is:" + str(iter))
             sql = "SELECT * FROM semanticScholar_filter limit " + str(iter * iterNum) + "," + str(iterNum)
             logger.info(sql)
@@ -95,7 +95,7 @@ def genPickleData():
             cursor.execute(sql)
             # 获取所有记录列表
             results = cursor.fetchall()
-            logger.info("cursor fetch finished" + str(iter))
+            logger.info("cursor fetch finished " + str(iter+1 ))
             # 构建vocabulary，并将出现次数小于5的单词全部去除，视为UNKNOW
             data_x = []
             data_y = []
@@ -114,7 +114,7 @@ def genPickleData():
                         finish_num += 1
 
             logger.info("results has iterated" + str(iter))
-            pickle.dump((data_x, data_y), open('../tarindata/train_data_' + str(iter), 'wb'))
+            pickle.dump((data_x, data_y), open('../traindata/train_data_' + str(iter), 'wb'))
         logger.info("pickle dump end")
     except:
         print("Error: unable to fetch data")
