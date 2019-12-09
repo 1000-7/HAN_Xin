@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def read_dataset():
-    num = random.randint(1, 10)
+    num = random.randint(0, 9)
     logger.info("now epoch use data: %s" % str(num))
     with open("../traindata/train_data_" + str(num), 'rb') as f:
         data_x, data_y = pickle.load(f)
