@@ -75,7 +75,7 @@ def sampleNumControler(sentType):
     """
     temp = sampleNumControler[sentType]
     max_sample_num = temp[0]
-    now_sample_num = temp[0]+1
+    now_sample_num = temp[1]+1
     if now_sample_num <= max_sample_num:
         return True
     else:
