@@ -10,13 +10,15 @@ import time
 import os
 from load_data import read_dataset, batch_iter
 from tensorflow.python.framework import graph_util
+from config import config
+config = config["104"]
 # Data loading params
 tf.flags.DEFINE_string("data_dir", "data/data.dat", "data directory")
-tf.flags.DEFINE_integer("vocab_size",625292, "vocabulary size")
-tf.flags.DEFINE_integer("num_classes", 11, "number of classes")
+tf.flags.DEFINE_integer("vocab_size",config["vocab_size"], "vocabulary size")
+tf.flags.DEFINE_integer("num_classes", config["num_classes"], "number of classes")
 tf.flags.DEFINE_integer("embedding_size", 200, "Dimensionality of character embedding (default: 200)")
 tf.flags.DEFINE_integer("hidden_size", 50, "Dimensionality of GRU hidden layer (default: 50)")
-tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
+tf.flags.DEFINE_integer("batch_size", 128, "Batch Size (default: 64)")
 tf.flags.DEFINE_integer("num_epochs", 100, "Number of training epochs (default: 50)")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
 tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (default: 5)")
