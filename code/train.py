@@ -11,7 +11,9 @@ import os
 from load_data import read_dataset, batch_iter
 from tensorflow.python.framework import graph_util
 from config import config
-config = config["104"]
+
+
+config = config["10"]
 # Data loading params
 tf.flags.DEFINE_string("data_dir", "data/data.dat", "data directory")
 tf.flags.DEFINE_integer("vocab_size",config["vocab_size"], "vocabulary size")
@@ -28,7 +30,14 @@ tf.flags.DEFINE_float("grad_clip", 5, "grad clip to prevent gradient explode")  
 
 FLAGS = tf.flags.FLAGS
 pb_file_path = os.getcwd()
-with tf.Session() as sess:
+# Use GPU
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+config = tf.ConfigProto()
+
+config.gpu_options.per_process_gpu_memory_fraction = 0.6
+config.gpu_options.allow_growth = True
+
+with tf.Session(config = config) as sess:
     han = model.HAN(vocab_size=FLAGS.vocab_size,
                     num_classes=FLAGS.num_classes,
                     embedding_size=FLAGS.embedding_size,
