@@ -12,7 +12,7 @@ from code.config import config
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-config = config["104"]
+config = config["10"]
 max_sent_in_doc = config["max_sent_in_doc"]
 max_word_in_sent = config["max_word_in_sent"]
 iterNum = config["gen_pickle_iter_num"]
@@ -20,8 +20,10 @@ iterNum = config["gen_pickle_iter_num"]
 dict = pd.read_excel(config["section_title_class_index_path"])
 sheet = dict.values.tolist()
 sectTitle2classindex_dict = {}
+sampleNumControler = {}
 for item in sheet:
     sectTitle2classindex_dict[item[0]] = item[1]
+    sampleNumControler[item[0]] = [item[3],0]
 
 vocab = pickle.load(open('word2index_dict', 'rb'))
 UNKNOWN = 0
@@ -43,6 +45,8 @@ def data_trans(paperSection,sentType):
     :param sentType:
     :return:
     """
+    if sampleNumControler(sentType):
+        return None
     doc = np.zeros((max_sent_in_doc,
                     max_word_in_sent),
                    dtype=np.int32)
@@ -62,6 +66,20 @@ def data_trans(paperSection,sentType):
         labels[label - 1] = 1
         return [doc.tolist(),labels]
     return None
+
+def sampleNumControler(sentType):
+    """
+    对每一类的训练样本数量进行控制
+    :param sentType:
+    :return:
+    """
+    temp = sampleNumControler[sentType]
+    max_sample_num = temp[0]
+    now_sample_num = temp[0]+1
+    if now_sample_num <= max_sample_num:
+        return True
+    else:
+        return False
 
 def genPickleData():
     # 使用cursor()方法获取操作游标
