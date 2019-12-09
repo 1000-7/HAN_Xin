@@ -4,11 +4,11 @@ import tensorflow as tf
 import os
 import pickle
 from config import config
-
-config = config["104"]
+import numpy as np
+config = config["10"]
 
 # 加载模型
-def load_model(path_to_model="/home/wangxin/PycharmProjects/mayq/codemodel.pb"):
+def load_model(path_to_model="../codemodel.pb"):
     if not os.path.exists(path_to_model):
         raise ValueError(path_to_model + " is not exist.")
 
@@ -22,11 +22,11 @@ def load_model(path_to_model="/home/wangxin/PycharmProjects/mayq/codemodel.pb"):
     return model_graph
 
 def TestModel():
-    with open("/home/wangxin/PycharmProjects/mayq/code/mysql/han_type1_data_1", 'rb') as f:
+    with open("../traindata/train_data_1", 'rb') as f:
         data_x, data_y = pickle.load(f)
         length = len(data_x)
-        test_x = data_x[int(length * 0.99) + 1:]
-        test_y = data_y[int(length * 0.99) + 1:]
+        test_x = data_x[int(length * 0.75) + 1:]
+        test_y = data_y[int(length * 0.75) + 1:]
         # 加载模型
         model_graph = load_model()
 
@@ -50,16 +50,20 @@ def TestModel():
                     }
                     pred = sess.run(prediction, feed_dict=feed_dict)
                     pred_y.append(pred)
-                    if real_y[pred[0]] == 1:
-                        acc = acc + 1
-                print("acc  " + str(acc / len(test_y)))
         return test_y,pred_y
 def get_accuracy_perClass(test_y,pred_y):
-    totalNum = [[0]*config["num_classes"]]
-    accuracyNum = [[[0]*config["num_classes"]]]
-    for i,pred in enumerate(test_y):
-        pass
+    totalNum = [0]*config["num_classes"]
+    accuracyNum = [0]*config["num_classes"]
+    for i,pred in enumerate(pred_y):
+        real = np.argmax(test_y[i])
+        if np.argmax(pred) == real:
+            temp = accuracyNum[real]
+            accuracyNum[real] = temp+1
+        totalNum[real] = totalNum[real] + 1
     for i,tNum in enumerate(totalNum):
-        print("类别 " + str(i+1) + " 正确率为-" + str(accuracyNum[i]/tNum))
+        print("类别 " + str(i+1) + " 正确率为-" + str(accuracyNum[i]/tNum) + " 类别总数 " + str(tNum))
 
 
+if __name__ == "__main__":
+    test_y, pred_y = TestModel()
+    get_accuracy_perClass(test_y,pred_y)
