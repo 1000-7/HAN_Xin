@@ -8,7 +8,7 @@ import numpy as np
 config = config["10"]
 
 # 加载模型
-def load_model(path_to_model="../codemodel.pb"):
+def load_model(path_to_model="../codemodel-12-11.pb"):
     if not os.path.exists(path_to_model):
         raise ValueError(path_to_model + " is not exist.")
 
@@ -22,11 +22,9 @@ def load_model(path_to_model="../codemodel.pb"):
     return model_graph
 
 def TestModel():
-    with open("../traindata/train_data_1", 'rb') as f:
-        data_x, data_y = pickle.load(f)
-        length = len(data_x)
-        test_x = data_x[int(length * 0.75) + 1:]
-        test_y = data_y[int(length * 0.75) + 1:]
+    with open("../traindata/test_data", 'rb') as f:
+        test_x, test_y = pickle.load(f)
+        length = len(test_y)
         # 加载模型
         model_graph = load_model()
 
@@ -61,7 +59,8 @@ def get_accuracy_perClass(test_y,pred_y):
             accuracyNum[real] = temp+1
         totalNum[real] = totalNum[real] + 1
     for i,tNum in enumerate(totalNum):
-        print("类别 " + str(i+1) + " 正确率为-" + str(accuracyNum[i]/tNum) + " 类别总数 " + str(tNum))
+        if not tNum == 0:
+            print("类别 " + str(i+1) + " 正确率为 " + str(accuracyNum[i]/tNum) + " 类别总数 " + str(tNum))
 
 
 if __name__ == "__main__":
