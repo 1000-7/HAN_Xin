@@ -21,6 +21,7 @@ dict = pd.read_excel(config["section_title_class_index_path"])
 sheet = dict.values.tolist()
 sectTitle2classindex_dict = {}
 sampleNumControler = {}
+data_save_path = config["data_save_path"]
 for item in sheet:
     sectTitle2classindex_dict[item[0]] = item[1]
     sampleNumControler[item[0]] = [item[3],0]
@@ -106,6 +107,8 @@ def sampleNumControl(sentType,train_data=True):
 def gen_train_data_pickle():
     # 使用cursor()方法获取操作游标
     cursor = db.cursor()
+    text_x = []
+    text_y = []
     # SQL 查询语句
     try:
         vocab['UNKNOW_TOKEN'] = 0
@@ -134,9 +137,12 @@ def gen_train_data_pickle():
                         if finish_num % 10000 == 0:
                             logger.info(str(finish_num) + " / " + str(iterNum) + " has finished")
                         finish_num += 1
+                        text_x.append(paperSection)
+                        text_y.append(sentType)
 
             logger.info("results has iterated" + str(iter))
-            pickle.dump((data_x, data_y), open('../traindata/train_data_' + str(iter), 'wb'))
+            pickle.dump((data_x, data_y), open(data_save_path+'train_data_' + str(iter), 'wb'))
+        pickle.dump((text_x, text_y), open(data_save_path+'text_data', 'wb'))
         logger.info("pickle dump end")
     except:
         print("Error: unable to fetch data")
@@ -147,7 +153,7 @@ def shuffle_and_balance_data():
     data_x = []
     data_y = []
     for iter in range(0, 10):
-        x, y = pickle.load(open('../traindata/train_data_' + str(iter), 'rb'))
+        x, y = pickle.load(open(data_save_path+'train_data_' + str(iter), 'rb'))
         data_x.extend(x)
         data_y.extend(y)
     # classNum = np.sum(data_y,axis=0)
@@ -164,7 +170,7 @@ def shuffle_and_balance_data():
             x.append(data_x[il])
             y.append(data_y[il])
         print(np.sum(y,axis=0))
-        pickle.dump((x, y), open('../traindata/train_data_balance_' + str(iter), 'wb'))
+        pickle.dump((x, y), open(data_save_path+ 'train_data_balance_' + str(iter), 'wb'))
         iter = iter+1
     logger.info("pickle dump end")
     # 每个pickle中 各个类别对应的数量
@@ -226,4 +232,6 @@ def gen_test_data_pickle():
     db.close()
 
 if __name__ == "__main__":
-    gen_test_data_pickle()
+    gen_train_data_pickle()
+    shuffle_and_balance_data()
+    # gen_test_data_pickle()
