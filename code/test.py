@@ -6,9 +6,10 @@ import pickle
 from config import config
 import numpy as np
 config = config["10"]
-
+from sklearn.metrics import classification_report
+import pandas as pd
 # 加载模型
-def load_model(path_to_model="../codemodel-12-11.pb"):
+def load_model(path_to_model = config["model_save_path"]+"model-11.pb"):
     if not os.path.exists(path_to_model):
         raise ValueError(path_to_model + " is not exist.")
 
@@ -50,19 +51,37 @@ def TestModel():
                     pred_y.append(pred)
         return test_y,pred_y
 def get_accuracy_perClass(test_y,pred_y):
-    totalNum = [0]*config["num_classes"]
-    accuracyNum = [0]*config["num_classes"]
-    for i,pred in enumerate(pred_y):
+
+    # totalNum = [0]*config["num_classes"]
+    # accuracyNum = [0]*config["num_classes"]
+    # for i,pred in enumerate(pred_y):
+    #     real = np.argmax(test_y[i])
+    #     if np.argmax(pred) == real:
+    #         temp = accuracyNum[real]
+    #         accuracyNum[real] = temp+1
+    #     totalNum[real] = totalNum[real] + 1
+    # for i,tNum in enumerate(totalNum):
+    #     if not tNum == 0:
+    #         print("类别 " + str(i+1) + " 正确率为 " + str(accuracyNum[i]/tNum) + " 类别总数 " + str(tNum))\
+    y_true = []
+    y_pred = []
+    target_names = ["class" + str(i+1) for i in range(0,11)]
+    res = []
+    for i in range(0,11):
+        res.append([0] * config["num_classes"])
+
+    for i, predicty in enumerate(pred_y):
         real = np.argmax(test_y[i])
-        if np.argmax(pred) == real:
-            temp = accuracyNum[real]
-            accuracyNum[real] = temp+1
-        totalNum[real] = totalNum[real] + 1
-    for i,tNum in enumerate(totalNum):
-        if not tNum == 0:
-            print("类别 " + str(i+1) + " 正确率为 " + str(accuracyNum[i]/tNum) + " 类别总数 " + str(tNum))
+        y_true.append(real)
+        pred =  np.argmax(predicty)
+        temp =  res[real]
+        temp[pred] = temp[pred] + 1
+        res[real] = temp
+        y_pred.append(pred)
 
-
+    print(classification_report(y_true, y_pred, target_names=target_names))
+    data = pd.DataFrame(res,index=["真实为 "+str(i) for i in range(1,12)],columns = ["预测为 "+str(i) for i in range(1,12)] )
+    print(data)
 if __name__ == "__main__":
     test_y, pred_y = TestModel()
     get_accuracy_perClass(test_y,pred_y)

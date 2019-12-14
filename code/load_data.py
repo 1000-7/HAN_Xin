@@ -2,15 +2,17 @@ import pickle
 import numpy as np
 import random
 import logging
+from config import config
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+config = config["10"]
 
-def read_dataset():
+def read_dataset(datapath):
     num = random.randint(0, 9)
     logger.info("now epoch use data: %s" % str(num))
-    with open("../traindata/train_data_" + str(num), 'rb') as f:
+    with open(datapath+"train_data_balance_" + str(num), 'rb') as f:
         data_x, data_y = pickle.load(f)
         length = len(data_x)
         train_x, dev_x = data_x[:int(length * 0.99)], data_x[int(length * 0.99) + 1:]
@@ -37,7 +39,6 @@ def batch(inputs):
                 b[i, j, k] = word
 
     return b, document_sizes, sentence_sizes
-
 
 def batch_iter(data, batch_size, num_epochs, shuffle=True):
     data = np.array(data)
