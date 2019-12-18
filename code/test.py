@@ -5,11 +5,12 @@ import os
 import pickle
 from config import config
 import numpy as np
-config = config["10"]
+from modelAsServer import textPreprocessing
 from sklearn.metrics import classification_report
 import pandas as pd
+config = config["10"]
 # 加载模型
-def load_model(path_to_model = config["model_save_path"]+"model-11.pb"):
+def load_model(path_to_model = config["model_save_path"]+"model-3-6-7.pb"):
     if not os.path.exists(path_to_model):
         raise ValueError(path_to_model + " is not exist.")
 
@@ -21,67 +22,60 @@ def load_model(path_to_model = config["model_save_path"]+"model-11.pb"):
             od_graph_def.ParseFromString(serialized_graph)
             tf.import_graph_def(od_graph_def, name='')
     return model_graph
-
-def TestModel():
-    with open("../traindata/test_data", 'rb') as f:
-        test_x, test_y = pickle.load(f)
-        length = len(test_y)
-        # 加载模型
-        model_graph = load_model()
-
-        max_sentence_num = model_graph.get_tensor_by_name('placeholder/max_sentence_num:0')
-        max_sentence_length = model_graph.get_tensor_by_name('placeholder/max_sentence_length:0')
-        # x的shape为[1, 句子数， 句子长度(单词个数)]，但是每个样本的数据都不一样，，所以这里指定为空
-        input_x = model_graph.get_tensor_by_name('placeholder/input_x:0')
-
-        prediction = model_graph.get_tensor_by_name('doc_classification/predict:0')
+def submodel(test_x, test_y):
+    model_graph = load_model(config["model_save_path"] + "model-3-6-7.pb")
+    max_sentence_num = model_graph.get_tensor_by_name('placeholder/max_sentence_num:0')
+    max_sentence_length = model_graph.get_tensor_by_name('placeholder/max_sentence_length:0')
+    # x的shape为[1, 句子数， 句子长度(单词个数)]，但是每个样本的数据都不一样，，所以这里指定为空
+    input_x = model_graph.get_tensor_by_name('placeholder/input_x:0')
+    prediction = model_graph.get_tensor_by_name('doc_classification/predict:0')
+    sect_dict = get_dict()
+    with tf.Session(graph=model_graph) as sess:
         pred_y = []
-        with model_graph.as_default():
+        real_y = []
+        for i, y in enumerate(test_y):
+            if not y in sect_dict.keys():
+                continue
+            feed_dict = {
+                input_x: [textPreprocessing(test_x[i])],
+                max_sentence_num: 30,
+                max_sentence_length: 30
+            }
+            pred = sess.run(prediction, feed_dict=feed_dict)
+            pred = np.argmax(pred)
+            pred_y.append(pred+1)
 
-            with tf.Session(graph=model_graph) as sess:
+            # real = np.argmax(y)
+            real_y.append(sect_dict[y])
+        return real_y, pred_y
 
-                acc = 0
-                for i, real_y in enumerate(test_y):
-                    feed_dict = {
-                        input_x: [test_x[i]],
-                        max_sentence_num: 30,
-                        max_sentence_length: 30
-                    }
-                    pred = sess.run(prediction, feed_dict=feed_dict)
-                    pred_y.append(pred)
-        return test_y,pred_y
-def get_accuracy_perClass(test_y,pred_y):
+def get_dict():
+    dict = pd.read_excel("./3_6_7.xlsx")
+    sheet = dict.values.tolist()
+    sectTitle2classindex_dict = {}
+    for item in sheet:
+        sectTitle2classindex_dict[item[0]] = item[1]
+    return sectTitle2classindex_dict
+def TestModel():
 
-    # totalNum = [0]*config["num_classes"]
-    # accuracyNum = [0]*config["num_classes"]
-    # for i,pred in enumerate(pred_y):
-    #     real = np.argmax(test_y[i])
-    #     if np.argmax(pred) == real:
-    #         temp = accuracyNum[real]
-    #         accuracyNum[real] = temp+1
-    #     totalNum[real] = totalNum[real] + 1
-    # for i,tNum in enumerate(totalNum):
-    #     if not tNum == 0:
-    #         print("类别 " + str(i+1) + " 正确率为 " + str(accuracyNum[i]/tNum) + " 类别总数 " + str(tNum))\
-    y_true = []
-    y_pred = []
-    target_names = ["class" + str(i+1) for i in range(0,11)]
-    res = []
-    for i in range(0,11):
-        res.append([0] * config["num_classes"])
+    with open("../traindata/3_6_7_submodel/text_data", 'rb') as f:
+        test_x, test_y = pickle.load(f)
+        return submodel(test_x, test_y)
 
-    for i, predicty in enumerate(pred_y):
-        real = np.argmax(test_y[i])
-        y_true.append(real)
-        pred =  np.argmax(predicty)
-        temp =  res[real]
-        temp[pred] = temp[pred] + 1
-        res[real] = temp
-        y_pred.append(pred)
 
-    print(classification_report(y_true, y_pred, target_names=target_names))
-    data = pd.DataFrame(res,index=["真实为 "+str(i) for i in range(1,12)],columns = ["预测为 "+str(i) for i in range(1,12)] )
+def get_accuracy_perClass(test_y,pred_y,classNum ):
+    target_names = ["class" + str(i+1) for i in range(0,classNum)]
+    res = np.zeros((3,3))
+    for i,real in enumerate(test_y):
+        temp =  res[real-1,pred_y[i]-1]
+        res[real - 1, pred_y[i]-1] = temp +1
+    print(classification_report(test_y,
+                                pred_y,
+                                target_names=target_names))
+    data = pd.DataFrame(res.tolist(),
+                        index=["真实为 "+str(i) for i in range(1,classNum+1)],
+                        columns = ["预测为 "+str(i) for i in range(1,classNum+1)] )
     print(data)
 if __name__ == "__main__":
     test_y, pred_y = TestModel()
-    get_accuracy_perClass(test_y,pred_y)
+    get_accuracy_perClass(test_y,pred_y,3)
