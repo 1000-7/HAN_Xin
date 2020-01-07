@@ -43,8 +43,11 @@ config = {
     "min_word_freq":5,
     "max_sent_in_doc":30,
     "max_word_in_sent":30,
-    "gen_pickle_iter_num":200000,
-    "section_title_class_index_path":"./sectiontitle2classindex.xlsx"
+    "gen_pickle_iter_num":250000,
+    "section_title_class_index_path":"./12-18sectiontitle2classindex.xlsx",
+    "test_num_control":"./testNumControl.xlsx",
+    "data_save_path":"../traindata/9_class/",
+    "model_save_path":"../model/"
   }
 
 }
@@ -55,10 +58,8 @@ index2class_name = {
     3:'方法 Method',
     4:'实验结果 Result',
     5:'结论 Conclusion',
-    6:'实验材料 Material',
-    7:'实验病人 Patients',
-    8:'病例相关 Case',
-    9:'实验 Experiment',
-    10:'参考文献 Literature',
-    11:'研究不足 Limatation'
+    6:'病例相关 Case',
+    7:'实验 Experiment',
+    8:'参考文献 Literature',
+    9:'研究不足 Limatation'
 }

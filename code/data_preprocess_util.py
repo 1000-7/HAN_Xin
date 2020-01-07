@@ -109,7 +109,7 @@ def data_stat():
     :return:
     """
     # SQL 查询语句
-    sql = "SELECT * FROM semanticScholar_filter"
+    sql = "SELECT * FROM semanticScholar_train_data"
     try:
         # 执行SQL语句
         cursor.execute(sql)
@@ -140,4 +140,4 @@ def data_stat():
     # 关闭数据库连接
     db.close()
 if __name__ == "__main__":
-    genVocabulary()
+    data_stat()

@@ -11,8 +11,8 @@ import os
 from load_data import read_dataset, batch_iter
 from tensorflow.python.framework import graph_util
 from config import config
-
 config = config["10"]
+checkpointdir = "../checkpoint/"
 def train_model(train_data_path,calss_num,model_path):
     # 晴空计算图
     tf.reset_default_graph()
@@ -22,8 +22,8 @@ def train_model(train_data_path,calss_num,model_path):
     tf.flags.DEFINE_integer("num_classes", calss_num, "number of classes")
     tf.flags.DEFINE_integer("embedding_size", 200, "Dimensionality of character embedding (default: 200)")
     tf.flags.DEFINE_integer("hidden_size", 50, "Dimensionality of GRU hidden layer (default: 50)")
-    tf.flags.DEFINE_integer("batch_size", 256, "Batch Size (default: 64)")
-    tf.flags.DEFINE_integer("num_epochs", 100, "Number of training epochs (default: 50)")
+    tf.flags.DEFINE_integer("batch_size", 160, "Batch Size (default: 64)")
+    tf.flags.DEFINE_integer("num_epochs", 25, "Number of training epochs (default: 50)")
     tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
     tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (default: 5)")
     tf.flags.DEFINE_integer("evaluate_every", 100, "evaluate every this many batches")
@@ -37,8 +37,11 @@ def train_model(train_data_path,calss_num,model_path):
 
     configenv.gpu_options.per_process_gpu_memory_fraction = 0.6
     configenv.gpu_options.allow_growth = True
+    # global_step = tf.train.get_or_create_global_step()
+    # glstep = tf.assign_add(global_step, 1)
 
     with tf.Session(config = configenv) as sess:
+    # with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpointdir + 'linear.cpkt', save_checkpoint_secs=5,config = configenv) as sess:
         han = model.HAN(vocab_size=FLAGS.vocab_size,
                         num_classes=FLAGS.num_classes,
                         embedding_size=FLAGS.embedding_size,
@@ -48,6 +51,9 @@ def train_model(train_data_path,calss_num,model_path):
             loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=han.input_y,
                                                                           logits=han.out,
                                                                           name='loss'))
+            # loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits (labels=han.input_y,
+            #                                                               logits=han.out,
+            #                                                               name='loss')*[5,1,8,1,1,8,8,1,1,1,1])
         with tf.name_scope('accuracy'):
             predict = tf.argmax(han.out, axis=1, name='predict')
             label = tf.argmax(han.input_y, axis=1, name='label')
@@ -64,7 +70,7 @@ def train_model(train_data_path,calss_num,model_path):
         grads, _ = tf.clip_by_global_norm(tf.gradients(loss, tvars), FLAGS.grad_clip)
         grads_and_vars = tuple(zip(grads, tvars))
         train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
-
+        saver = tf.train.Saver()
         # Keep track of gradient values and sparsity (optional)
         grad_summaries = []
         for g, v in grads_and_vars:
@@ -103,11 +109,9 @@ def train_model(train_data_path,calss_num,model_path):
                 han.batch_size: 64
             }
             _, step, summaries, cost, accuracy = sess.run([train_op, global_step, train_summary_op, loss, acc], feed_dict)
-
             time_str = str(int(time.time()))
             print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, cost, accuracy))
             train_summary_writer.add_summary(summaries, step)
-
             return step
 
 
@@ -123,6 +127,8 @@ def train_model(train_data_path,calss_num,model_path):
             time_str = str(int(time.time()))
             print("++++++++++++++++++dev++++++++++++++{}: step {}, loss {:g}, acc {:g}".format(time_str, step_now, cost,
                                                                                                accuracy))
+            if accuracy > 0.9:
+                saver.save(sess, checkpointdir, global_step=step)
             if writer:
                 writer.add_summary(summaries, step_now)
 
@@ -144,6 +150,7 @@ def train_model(train_data_path,calss_num,model_path):
                     except ValueError:
                         continue
 
+
         # 写入序列化的pb文件
         graph_def = tf.get_default_graph().as_graph_def()
         output_graph_def = graph_util.convert_variables_to_constants(
@@ -156,6 +163,4 @@ def train_model(train_data_path,calss_num,model_path):
             fid.write(serialized_graph)
     print("训练完成")
 if __name__ == "__main__":
-    # train_model("../traindata/main_model/",11,"../model/model-11")
-    train_model("../traindata/3_6_7_submodel/", 3, "../model/model-3-6-7")
-    # train_model("../traindata/1_2_submodel/", 2, "../model/model-1-2")
+    train_model("../traindata/9_class/",9, "../model/model-12-29-9")

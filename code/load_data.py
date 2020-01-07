@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 config = config["10"]
 
 def read_dataset(datapath):
-    num = random.randint(0, 9)
+    num = random.randint(0, 4)
     logger.info("now epoch use data: %s" % str(num))
     with open(datapath+"train_data_balance_" + str(num), 'rb') as f:
         data_x, data_y = pickle.load(f)

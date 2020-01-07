@@ -37,8 +37,8 @@ def textPreprocessing(text, max_sent_in_doc=30, max_word_in_sent=30):
     paperSection = text.replace("- ", "")
     sentences = sent_tokenizer.tokenize(paperSection)  # 将评论分句
     words = word_tokenizer.tokenize(paperSection)
-    if len(words) < 50 or len(sentences) < 2:
-        return None
+    # if len(words) < 50 or len(sentences) <= 2:
+    #     return None
     for i, sent in enumerate(sentences):
         words = word_tokenizer.tokenize(sent)
         if i < max_sent_in_doc:
