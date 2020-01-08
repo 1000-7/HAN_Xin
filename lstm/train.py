@@ -2,12 +2,10 @@ import os
 import pickle
 import random
 import datetime
-import numpy as np
-import pandas as pd
 import tensorflow as tf
-
-from lstm_model import textLstm
-from preprocess import *
+from util import read_dataset, batch_iter
+from lstm_model import lstm
+from tensorflow.python.framework import graph_util
 from sklearn.metrics import classification_report
 
 
@@ -39,6 +37,7 @@ def train_step(model_train, batch, label):
     model_train.summary_writer_train.add_summary(summary, step)
     time_str = datetime.datetime.now().isoformat()
     print("{}: step {}, loss {}, accuracy {}".format(time_str, step, loss, accuracy))
+    return step
 
 
 def dev_step(model_train, batch, label, return_predict=False):
@@ -62,19 +61,22 @@ def dev_step(model_train, batch, label, return_predict=False):
 
 class textRnnTrain(object):
     def __init__(self):
-        self.sess = tf.Session()
-        self.model = textLstm.lstm(num_layers=1,
+        configenv = tf.ConfigProto()
+        configenv.gpu_options.per_process_gpu_memory_fraction = 0.6
+        configenv.gpu_options.allow_growth = True
+        self.sess = tf.Session(config = configenv)
+        self.model = lstm(num_layers=1,
                                    sequence_length=500,
                                    embedding_size=100,
-                                   vocab_size=20005,
+                                   vocab_size=625293,
                                    rnn_size=100,
-                                   num_classes=6)
+                                   num_classes=9)
         self.global_step = tf.Variable(0, name="global_step", trainable=False)
 
         # 定义optimizer
         self.optimizer = tf.train.AdamOptimizer(0.005).minimize(self.model.loss, global_step=self.global_step)
         self.sess.run(tf.global_variables_initializer())
-        self.batches = get_batch(1, 400)
+        self.batches = get_batch(1, 160)
 
         # tensorBoard
         tf.summary.scalar('loss', self.model.loss)
@@ -85,17 +87,43 @@ class textRnnTrain(object):
         self.summary_writer_test = tf.summary.FileWriter("./summary/rnn_summary/test", graph=self.sess.graph)
 
 
-def main(model_train):
-    test_x, test_y = pickle.load(open("./data/pkl/test.pkl", "rb"))
-    for data in model_train.batches:
-        x_train, y_train = zip(*data)
-        train_step(model_train, x_train, y_train)
-        current_step = tf.train.global_step(model_train.sess, model_train.global_step)
-        if current_step % 10 == 0:
-            print("dev step\t:")
-            dev_step(model_train, test_x, test_y)
+def main(model_train,
+         train_data_path = "./train_data_small/",
+         num_epochs = 25,
+         batch_size = 160,
+         evaluate_every = 100,
+         model_path = "lstm_model_01_07"):
+    # 晴空计算图
 
-    dev_step(model_train, test_x, test_y, return_predict=True)
+    for epoch in range(num_epochs):
+        print('current epoch %s' % (epoch + 1))
+        train_x, train_y, dev_x, dev_y = read_dataset(train_data_path)
+        print("data load finished")
+        for i in range(0, len(train_y), batch_size):
+            x = train_x[i:i + batch_size]
+            y = train_y[i:i + batch_size]
+            try:
+                step = train_step(model_train, x, y)
+            except ValueError:
+                print("error")
+                continue
+            if step % evaluate_every == 0:
+                try:
+                    dev_step(model_train, dev_x, dev_y)
+                except ValueError:
+                    continue
+        # 写入序列化的pb文件
+        graph_def = tf.get_default_graph().as_graph_def()
+        output_graph_def = graph_util.convert_variables_to_constants(
+            model_train.sess,
+            graph_def,
+            output_node_names=["softmaxLayer/predict"]  # < -- 参数：output_node_names，输出节点名
+        )
+        with tf.gfile.GFile(model_path + '.pb', mode='wb') as fid:
+            serialized_graph = output_graph_def.SerializeToString()
+            fid.write(serialized_graph)
+
+    # dev_step(model_train, test_x, test_y, return_predict=True)
     # print(classification_report(y_true=test_y, y_pred=predict))
 
 
